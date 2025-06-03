@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EU AI Act Compliance Wizard</title>
+    <style>
+        :root {
+            --primary-color: #6a5acd; /* SlateBlue */
+            --secondary-color: #9370db; /* MediumPurple */
+            --text-color: #333;
+            --bg-color: #f4f6f8;
+            --border-color: #d1d9e6;
+            --success-color: #32cd32; /* LimeGreen */
+            --warning-color: #ffd700; /* Gold */
+            --danger-color: #ff6347; /* Tomato */
+            --info-color: #1e90ff; /* DodgerBlue */
+            --not-sure-highlight-color: #c0c0c0; /* Darker grey for "I'm not sure" border */
+            --not-sure-bg-color: #f0f0f0; /* Subtle background for "I'm not sure" */
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --border-radius: 10px;
+            --box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+            --transition-speed: 0.3s ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            line-height: 1.7;
+        }
+
+        .wizard-container {
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            width: 100%;
+            max-width: 650px;
+            transition: height var(--transition-speed);
+        }
+
+        .wizard-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .wizard-header h1 {
+            margin: 0;
+            font-size: 1.75em;
+            font-weight: 700;
+        }
+
+        /* Progress Bar Styles */
+        .progress-bar-container {
+            padding: 15px 30px 5px; 
+            background-color: #fff; 
+            border-bottom: 1px solid var(--border-color); 
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .progress-step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9em;
+            border: 2px solid var(--border-color);
+            transition: background-color var(--transition-speed), border-color var(--transition-speed), color var(--transition-speed);
+            z-index: 2; 
+        }
+
+        .progress-step.active .progress-step-number {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .progress-step.completed .progress-step-number {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: #fff;
+        }
+        
+        .progress-step-label {
+            font-size: 0.75em;
+            color: var(--text-color);
+            margin-top: 5px;
+        }
+
+        .progress-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 15px; 
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background-color: var(--border-color);
+            z-index: 1; 
+            transform: translateX(0%); 
+        }
+         .progress-step.completed:not(:last-child)::after {
+            background-color: var(--secondary-color);
+        }
+
+
+        .wizard-screen {
+            padding: 25px 30px;
+            display: none;
+            animation: fadeIn var(--transition-speed);
+        }
+
+        .wizard-screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .wizard-screen h2 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-weight: 600;
+            display: flex; 
+            align-items: center; 
+        }
+         .wizard-screen h2 .step-number-inline { 
+            background-color: var(--secondary-color);
+            color: white;
+            width: 26px; 
+            height: 26px; 
+            border-radius: 50%; 
+            font-size: 0.75em; 
+            margin-right: 10px; 
+            display: inline-flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 0; 
+            font-weight: 600; 
+            line-height: 1; 
+        }
+
+
+        .wizard-screen p {
+            margin-bottom: 25px;
+            font-size: 1em;
+            color: #555;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        @media (min-width: 480px) {
+            .options-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+
+        .option-button,
+        .cta-button,
+        .nav-button {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 0.95em;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            font-weight: 500;
+        }
+
+        .option-button:hover, .option-button.selected {
+            background-color: var(--secondary-color);
+            color: #fff;
+            border-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+         .option-button.selected {
+            font-weight: 600;
+        }
+
+        .option-button.option-not-sure, .option-button.option-none { 
+            border-color: var(--not-sure-highlight-color);
+            font-weight: 600; 
+            background-color: var(--not-sure-bg-color); 
+        }
+        .option-button.option-not-sure:hover, 
+        .option-button.option-not-sure.selected,
+        .option-button.option-none:hover,
+        .option-button.option-none.selected {
+             background-color: var(--info-color);
+             border-color: var(--info-color);
+             color: #fff;
+        }
+
+
+        .cta-button {
+            background-color: var(--primary-color);
+            color: #fff;
+            font-weight: 600;
+            text-align: center;
+            display: block;
+            width: fit-content;
+            margin: 25px auto 0;
+            padding: 14px 35px;
+        }
+
+        .cta-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(var(--primary-color), 0.3);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-button {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border-color: var(--border-color);
+            flex-basis: calc(50% - 8px);
+            text-align: center;
+            justify-content: center;
+        }
+
+        .nav-button:disabled {
+            background-color: #e9ecef;
+            color: #adb5bd;
+            cursor: not-allowed;
+            border-color: #ced4da;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-button.next {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+         .nav-button.next:disabled {
+            background-color: var(--secondary-color);
+            opacity: 0.7;
+            color: #e0e0e0;
+            border-color: var(--secondary-color);
+        }
+
+
+        .nav-button:hover:not(:disabled) {
+            opacity: 0.85;
+            transform: translateY(-2px);
+        }
+
+        .result-screen h2 {
+            margin-bottom: 15px;
+        }
+        .result-box {
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 5px solid;
+        }
+        .result-box.high-risk { background-color: #ffebee; color: var(--danger-color); border-left-color: var(--danger-color); }
+        .result-box.limited-risk { background-color: #fff8e1; color: #b18000; border-left-color: var(--warning-color); }
+        .result-box.minimal-risk { background-color: #e8f5e9; color: #2e7d32; border-left-color: var(--success-color); }
+        .result-box.clarification-needed { background-color: #e3f2fd; color: var(--info-color); border-left-color: var(--info-color); }
+
+        .result-box h3 {
+            margin-top: 0;
+            font-size: 1.6em;
+            margin-bottom: 10px;
+        }
+        .result-box p {
+            margin-bottom: 10px;
+            font-size: 1.05em;
+            line-height: 1.8;
+            color: inherit;
+        }
+        .contact-cta {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+        .contact-cta p {
+            color: var(--text-color);
+            margin-bottom: 0;
+        }
+        .contact-cta a {
+            color: var(--primary-color);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .contact-cta a:hover {
+            text-decoration: underline;
+            color: var(--secondary-color);
+        }
+
+        .wizard-footer-info {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        .wizard-footer-info p {
+            font-size: 0.85em;
+            color: #777;
+            margin-bottom: 5px; 
+        }
+         .wizard-footer-info p:last-child {
+            margin-bottom: 0; 
+        }
+        .wizard-footer-info .beta-notice {
+            font-style: italic;
+            margin-bottom: 8px; 
+        }
+        .wizard-footer-info .terms-link a,
+        .wizard-footer-info .ai-act-link a { 
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        .wizard-footer-info .terms-link a:hover,
+        .wizard-footer-info .ai-act-link a:hover {
+            color: var(--secondary-color);
+        }
+
+
+        .option-button:focus-visible, .cta-button:focus-visible, .nav-button:focus-visible {
+            outline: 3px solid var(--secondary-color);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 3px var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wizard-container">
+        <header class="wizard-header">
+            <h1>EU AI Act Compliance Wizard</h1>
+        </header>
+
+        <div class="progress-bar-container" id="progressBarContainer" style="display: none;">
+            <ul class="progress-bar">
+                <li class="progress-step" data-step="1">
+                    <div class="progress-step-number">1</div>
+                    <div class="progress-step-label">Role</div>
+                </li>
+                <li class="progress-step" data-step="2">
+                    <div class="progress-step-number">2</div>
+                    <div class="progress-step-label">Use Case</div>
+                </li>
+                <li class="progress-step" data-step="3">
+                    <div class="progress-step-number">3</div>
+                    <div class="progress-step-label">Impact</div>
+                </li>
+                <li class="progress-step" data-step="4">
+                    <div class="progress-step-number">4</div>
+                    <div class="progress-step-label">Docs</div>
+                </li>
+            </ul>
+        </div>
+
+
+        <div id="screen-1" class="wizard-screen active">
+            <h2>&#x2728; Welcome to the EU AI Act Compliance Wizard!</h2> <p>This wizard will guide you through a few simple steps to help assess your AI system's potential compliance level with the EU AI Act. Understanding your obligations is the first step towards responsible AI.</p>
+            <button class="cta-button" id="getStartedBtn" aria-label="Get started with the compliance wizard">Get Started</button>
+            <div class="wizard-footer-info">
+                <p class="beta-notice">Beta Version</p>
+                <p class="ai-act-link">This wizard is based on the principles of the <a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng" target="_blank" rel="noopener noreferrer">EU AI Act</a>.</p>
+                <p class="terms-link">Use of the wizard is subject to the <a href="#" id="termsLinkIntro">terms of use</a>.</p>
+            </div>
+        </div>
+
+        <div id="screen-2" class="wizard-screen">
+            <h2><span class="step-number-inline">1</span>Role Identification</h2>
+            <p>What best describes your organization's role in relation to the AI system?</p>
+            <div class="options-grid">
+                <button class="option-button" data-question="role" data-value="Provider" aria-label="Select role: Provider">Provider</button>
+                <button class="option-button" data-question="role" data-value="Distributor" aria-label="Select role: Distributor">Distributor</button>
+                <button class="option-button" data-question="role" data-value="User" aria-label="Select role: User">User</button>
+                <button class="option-button option-not-sure" data-question="role" data-value="I'm not sure" aria-label="Select role: I'm not sure">I'm not sure</button>
+            </div>
+        </div>
+
+        <div id="screen-3" class="wizard-screen">
+            <h2><span class="step-number-inline">2</span>AI Use Case</h2>
+            <p>Does your AI system involve any of the following sensitive or high-impact areas?</p>
+            <div class="options-grid">
+                <button class="option-button" data-question="useCase" data-value="Employment" aria-label="Select use case: Employment">Employment</button>
+                <button class="option-button" data-question="useCase" data-value="Biometrics" aria-label="Select use case: Biometrics">Biometrics</button>
+                <button class="option-button" data-question="useCase" data-value="Credit" aria-label="Select use case: Credit Scoring">Credit Scoring</button>
+                <button class="option-button" data-question="useCase" data-value="Healthcare" aria-label="Select use case: Healthcare">Healthcare</button>
+                <button class="option-button" data-question="useCase" data-value="Critical infrastructure" aria-label="Select use case: Critical Infrastructure">Critical Infrastructure</button>
+                <button class="option-button" data-question="useCase" data-value="Education" aria-label="Select use case: Education">Education</button>
+                <button class="option-button option-none" data-question="useCase" data-value="None" aria-label="Select use case: None of the above">None of the above</button> 
+                <button class="option-button option-not-sure" data-question="useCase" data-value="I'm not sure" aria-label="Select use case: I'm not sure">I'm not sure</button>
+            </div>
+        </div>
+
+        <div id="screen-4" class="wizard-screen">
+            <h2><span class="step-number-inline">3</span>Decision Impact</h2>
+            <p>Does your AI system directly influence significant decisions about individuals (e.g., access to services, legal effects)?</p>
+             <div class="options-grid">
+                <button class="option-button" data-question="decisionImpact" data-value="Yes" aria-label="Select decision impact: Yes">Yes</button>
+                <button class="option-button" data-question="decisionImpact" data-value="No" aria-label="Select decision impact: No">No</button>
+                <button class="option-button option-not-sure" data-question="decisionImpact" data-value="I'm not sure" aria-label="Select decision impact: I'm not sure">I'm not sure</button>
+            </div>
+        </div>
+
+        <div id="screen-5" class="wizard-screen">
+            <h2><span class="step-number-inline">4</span>Documentation</h2>
+            <p>Do you have comprehensive documentation explaining how your AI system functions, its capabilities, limitations, and intended purpose?</p>
+            <div class="options-grid">
+                <button class="option-button" data-question="documentation" data-value="Yes" aria-label="Select documentation status: Yes">Yes</button>
+                <button class="option-button" data-question="documentation" data-value="No" aria-label="Select documentation status: No">No</button>
+                <button class="option-button option-not-sure" data-question="documentation" data-value="I'm not sure" aria-label="Select documentation status: I'm not sure">I'm not sure</button>
+            </div>
+        </div>
+
+        <div id="screen-6" class="wizard-screen result-screen">
+            <h2>Assessment Results</h2>
+            <div id="resultBox" class="result-box" role="alert" aria-live="assertive">
+                <h3 id="resultTitle"></h3>
+                <p id="resultDescription"></p>
+            </div>
+            <div class="contact-cta">
+                <p>Need more guidance or have specific questions? <br>
+                <a href="mailto:info@venture1.biz">Contact us at info@venture1.biz</a></p>
+            </div>
+             <button class="nav-button" id="restartBtn" style="margin: 20px auto 0; display: block; width: fit-content;">Start Over</button>
+            <div class="wizard-footer-info">
+                <p class="beta-notice">Beta Version</p>
+                <p class="ai-act-link">For further details, refer to the official <a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng" target="_blank" rel="noopener noreferrer">EU AI Act</a>.</p>
+                <p class="terms-link">Use of the wizard is subject to the <a href="#" id="termsLinkResult">terms of use</a>.</p>
+            </div>
+        </div>
+
+        <div class="navigation-buttons" id="navButtons" style="display: none;">
+            <button class="nav-button prev" id="prevBtn" disabled aria-label="Previous question">Previous</button>
+            <button class="nav-button next" id="nextBtn" disabled aria-label="Next question">Next</button>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const screens = document.querySelectorAll('.wizard-screen');
+            const getStartedBtn = document.getElementById('getStartedBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const navButtonsContainer = document.getElementById('navButtons');
+            const resultBox = document.getElementById('resultBox');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultDescription = document.getElementById('resultDescription');
+            const restartBtn = document.getElementById('restartBtn');
+            const progressBarContainer = document.getElementById('progressBarContainer');
+            const progressSteps = document.querySelectorAll('.progress-step');
+
+            let currentScreenIndex = 0; 
+            let currentQuestionStep = 0; 
+            const totalQuestionScreens = Array.from(screens).filter(s => s.querySelector('.options-grid')).length;
+
+            const userAnswers = {
+                role: null,
+                useCase: null,
+                decisionImpact: null,
+                documentation: null
+            };
+
+            function updateProgressBar() {
+                if (currentScreenIndex > 0 && currentScreenIndex <= totalQuestionScreens) {
+                    currentQuestionStep = currentScreenIndex;
+                } else if (currentScreenIndex > totalQuestionScreens) { 
+                    currentQuestionStep = totalQuestionScreens +1; 
+                } else {
+                    currentQuestionStep = 0; 
+                }
+
+                progressSteps.forEach((step) => { 
+                    const stepNumber = parseInt(step.dataset.step);
+                    if (stepNumber < currentQuestionStep) {
+                        step.classList.add('completed');
+                        step.classList.remove('active');
+                    } else if (stepNumber === currentQuestionStep) {
+                        step.classList.add('active');
+                        step.classList.remove('completed');
+                    } else {
+                        step.classList.remove('active');
+                        step.classList.remove('completed');
+                    }
+                });
+                progressBarContainer.style.display = (currentScreenIndex > 0 && currentScreenIndex <= totalQuestionScreens) ? 'block' : 'none';
+            }
+
+
+            function showScreen(index) {
+                screens.forEach((screen, i) => {
+                    screen.classList.toggle('active', i === index);
+                    if (i === index) {
+                        screen.setAttribute('tabindex', '-1');
+                        screen.focus();
+                    } else {
+                        screen.removeAttribute('tabindex');
+                    }
+                });
+                currentScreenIndex = index;
+                updateNavButtons();
+                updateProgressBar(); 
+
+                const isIntroScreen = index === 0;
+                const isResultScreen = index === screens.length - 1;
+                navButtonsContainer.style.display = (isIntroScreen || isResultScreen) ? 'none' : 'flex';
+            }
+
+            function updateNavButtons() {
+                prevBtn.disabled = currentScreenIndex <= 1;
+
+                const currentScreenElement = screens[currentScreenIndex];
+                const currentQuestionKey = currentScreenElement.querySelector('.option-button')?.dataset.question;
+
+                if (currentQuestionKey) {
+                    nextBtn.disabled = !userAnswers[currentQuestionKey];
+                } else {
+                    nextBtn.disabled = false;
+                }
+
+                if (currentScreenIndex === totalQuestionScreens) {
+                    nextBtn.textContent = 'View Results';
+                    nextBtn.setAttribute('aria-label', 'View assessment results');
+                } else {
+                    nextBtn.textContent = 'Next';
+                    nextBtn.setAttribute('aria-label', 'Next question');
+                }
+            }
+
+            getStartedBtn.addEventListener('click', () => {
+                showScreen(1); 
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentScreenIndex > 1) {
+                    showScreen(currentScreenIndex - 1);
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentScreenIndex === totalQuestionScreens) {
+                    evaluateResults();
+                    showScreen(screens.length - 1); 
+                } else if (currentScreenIndex < totalQuestionScreens) {
+                    showScreen(currentScreenIndex + 1);
+                }
+            });
+
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const question = button.dataset.question;
+                    const value = button.dataset.value;
+                    userAnswers[question] = value;
+
+                    document.querySelectorAll(`.option-button[data-question="${question}"]`).forEach(btn => {
+                        btn.classList.remove('selected');
+                        btn.setAttribute('aria-pressed', 'false');
+                    });
+                    button.classList.add('selected');
+                    button.setAttribute('aria-pressed', 'true');
+
+                    updateNavButtons();
+                });
+            });
+
+            restartBtn.addEventListener('click', () => {
+                for (const key in userAnswers) {
+                    userAnswers[key] = null;
+                }
+                document.querySelectorAll('.option-button.selected').forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+                showScreen(0); 
+            });
+
+            function evaluateResults() {
+                const { role, useCase, decisionImpact } = userAnswers;
+                let riskLevelClass = '';
+                let title = '';
+                let description = '';
+
+                const sensitiveUseAreas = ["Employment", "Biometrics", "Credit", "Healthcare", "Critical infrastructure", "Education"];
+                const isCriticalUseCase = sensitiveUseAreas.includes(useCase);
+                const isSureAboutAnswers = !Object.values(userAnswers).some(answer => answer === "I'm not sure");
+
+                if (!isSureAboutAnswers) {
+                    riskLevelClass = 'clarification-needed';
+                    title = 'Clarification Needed &#x1F914;'; // Replaced 🤔 with HTML entity
+                    description = "You selected 'I'm not sure' for one or more questions. To accurately assess your AI system's risk level, please gather more precise information about your system and its context. Consider consulting with legal or technical experts. You can then re-take this assessment.";
+                } else if (role === 'Provider' || isCriticalUseCase || decisionImpact === 'Yes') {
+                    riskLevelClass = 'high-risk';
+                    title = 'Potentially High-Risk AI System &#x1F534;'; // Replaced 🔴 with entity (large red circle)
+                    description = "Based on your answers, your AI system is likely to be classified as **High-Risk** under the EU AI Act. This classification entails significant obligations, including robust risk management systems, data governance, technical documentation, transparency measures, human oversight, and conformity assessments before market placement or use.";
+                    if (role === 'Provider' && (isCriticalUseCase || decisionImpact === 'Yes')) {
+                        description += " As a provider of such a system, you bear the primary responsibility for these compliance measures.";
+                    } else if (isCriticalUseCase) {
+                        description += " Systems used in sensitive areas like '" + useCase.toLowerCase() + "' are often high-risk, especially if they influence significant decisions.";
+                    } else if (decisionImpact === 'Yes') {
+                        description += " AI systems that directly influence significant decisions about individuals generally fall into the high-risk category.";
+                    }
+                } else if ((role === 'User' || role === 'Distributor') && isCriticalUseCase && decisionImpact === 'No') {
+                    riskLevelClass = 'limited-risk';
+                    title = 'Potentially Limited-Risk AI System &#x1F7E1;'; // Replaced 🟡 with entity (large yellow circle)
+                    description = "Your AI system might be classified as **Limited-Risk**. This typically applies when AI systems interact with humans in sensitive contexts but don't make the final significant decision. Key obligations usually revolve around transparency, such as ensuring individuals are aware they are interacting with an AI system or that content is AI-generated (e.g., chatbots, emotion recognition not used for high-risk purposes).";
+                } else if ((role === 'User' || role === 'Distributor') && useCase === 'None' && decisionImpact === 'No') {
+                    riskLevelClass = 'minimal-risk';
+                    title = 'Likely Minimal-Risk AI System &#x1F7E2;'; // Replaced 🟢 with entity (large green circle)
+                    description = "Your AI system appears to fall into the **Minimal-Risk** category. Systems in this category (e.g., AI-powered video games, spam filters) are generally permitted without extensive additional obligations under the EU AI Act. However, voluntary codes of conduct and continued adherence to general product safety laws are encouraged. Monitor any changes in its application or impact.";
+                } else {
+                    riskLevelClass = 'limited-risk';
+                    title = 'Potentially Limited-Risk AI System &#x1F7E1;'; // Replaced 🟡 with entity (large yellow circle)
+                    description = "Your AI system's risk profile suggests it might be **Limited-Risk**. This category often involves transparency obligations, such as informing users they are interacting with an AI. Review the specific characteristics of your system against the EU AI Act's definitions for limited-risk AI (e.g., systems that generate or manipulate image, audio or video content constituting deep fakes, AI systems intended to interact directly with natural persons).";
+                }
+                resultBox.className = 'result-box ' + riskLevelClass;
+                resultTitle.innerHTML = title; // innerHTML is used, so entities will be rendered
+                resultDescription.innerHTML = description;
+            }
+
+            showScreen(0); 
+        });
+    </script>
+
+</body>
+</html>
